@@ -1,2 +1,4 @@
-/gh-export-secret-names
-/gh-export-secret-names.exe
+/gh-export-secrets
+/gh-export-secrets.exe
+*.csv
+*.DS_Store*
