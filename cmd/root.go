@@ -97,14 +97,35 @@ func runCmd(owner string, g Getter, reportWriter io.Writer) error {
 			break
 		}
 	}
-	resp, err := g.GetOrgActionSecrets(owner)
+	orgSecrets, err := g.GetOrgActionSecrets(owner)
 	if err != nil {
 		return err
 	}
-	var responseObject response
-	json.Unmarshal(resp, &responseObject)
+	var responseObject secretsResponse
+	json.Unmarshal(orgSecrets, &responseObject)
 	fmt.Println(responseObject.Secrets)
+
+	var repo string = "bbs-testing"
+	repoActionSecrets, err := g.GetRepoActionSecrets(owner, repo)
+	if err != nil {
+		return err
+	}
+	var repoResponseObject secretsResponse
+	json.Unmarshal(repoActionSecrets, &repoResponseObject)
+	fmt.Println(repoResponseObject.Secrets)
+
+	scopedActionSecrets, err := g.
+
 	return nil
+}
+
+type SecretExport struct {
+	SecretLevel    string
+	SecretType     string
+	SecretName     string
+	SecretAccess   string
+	RepositoryName string
+	RepositoryID   int
 }
 
 type repoinfo struct {
@@ -130,6 +151,14 @@ type reposQuery struct {
 type Getter interface {
 	GetReposList(owner string, endCursor *string) (*reposQuery, error)
 	GetOrgActionSecrets(owner string) ([]byte, error)
+	GetRepoActionSecrets(owner string, repo string) ([]byte, error)
+	GetScopedOrgActionSecrets(owner string, secret string) ([]byte, error)
+	GetOrgDependabotSecrets(owner string) ([]byte, error)
+	GetRepoDependabotSecrets(owner string, repo string) ([]byte, error)
+	GetScopedOrgDependabotSecrets(owner string, secret string) ([]byte, error)
+	GetOrgCodespacesSecrets(owner string) ([]byte, error)
+	GetRepoCodespacesSecrets(owner string, repo string) ([]byte, error)
+	GetScopedOrgCodespacesSecrets(owner string, secret string) ([]byte, error)
 }
 
 type APIGetter struct {
@@ -156,7 +185,7 @@ func (g *APIGetter) GetReposList(owner string, endCursor *string) (*reposQuery, 
 	return query, err
 }
 
-type response struct {
+type secretsResponse struct {
 	TotalCount int      `json:"total_count"`
 	Secrets    []Secret `json:"secrets"`
 }
@@ -169,8 +198,114 @@ type Secret struct {
 	SelectedRepos string    `json:"selected_repositories_url"`
 }
 
+type scopedSecretsResponse struct {
+	TotalCount   int                `json:"total_count"`
+	Repositories []scopedRepository `json:"repositories"`
+}
+
+type scopedRepository struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 func (g *APIGetter) GetOrgActionSecrets(owner string) ([]byte, error) {
 	url := fmt.Sprintf("orgs/%s/actions/secrets", owner)
+
+	resp, err := g.restClient.Request("GET", url, nil)
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return responseData, err
+}
+
+func (g *APIGetter) GetRepoActionSecrets(owner string, repo string) ([]byte, error) {
+	url := fmt.Sprintf("repos/%s/%s/actions/secrets", owner, repo)
+
+	resp, err := g.restClient.Request("GET", url, nil)
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return responseData, err
+}
+
+func (g *APIGetter) GetScopedOrgActionSecrets(owner string, secret string) ([]byte, error) {
+	url := fmt.Sprintf("/orgs/%s/actions/secrets/%s/repositories", owner, secret)
+
+	resp, err := g.restClient.Request("GET", url, nil)
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return responseData, err
+}
+
+func (g *APIGetter) GetOrgDependabotSecrets(owner string) ([]byte, error) {
+	url := fmt.Sprintf("orgs/%s/dependabot/secrets", owner)
+
+	resp, err := g.restClient.Request("GET", url, nil)
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return responseData, err
+}
+
+func (g *APIGetter) GetRepoDependabotSecrets(owner string, repo string) ([]byte, error) {
+	url := fmt.Sprintf("repos/%s/%s/dependabot/secrets", owner, repo)
+
+	resp, err := g.restClient.Request("GET", url, nil)
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return responseData, err
+}
+
+func (g *APIGetter) GetScopedOrgDependabotSecrets(owner string, secret string) ([]byte, error) {
+	url := fmt.Sprintf("/orgs/%s/dependabot/secrets/%s/repositories", owner, secret)
+
+	resp, err := g.restClient.Request("GET", url, nil)
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return responseData, err
+}
+
+func (g *APIGetter) GetOrgCodespacesSecrets(owner string) ([]byte, error) {
+	url := fmt.Sprintf("orgs/%s/codespaces/secrets", owner)
+
+	resp, err := g.restClient.Request("GET", url, nil)
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return responseData, err
+}
+
+func (g *APIGetter) GetRepoCodespacesSecrets(owner string, repo string) ([]byte, error) {
+	url := fmt.Sprintf("repos/%s/%s/codespaces/secrets", owner, repo)
+
+	resp, err := g.restClient.Request("GET", url, nil)
+
+	responseData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return responseData, err
+}
+
+func (g *APIGetter) GetScopedOrgCodespacesSecrets(owner string, secret string) ([]byte, error) {
+	url := fmt.Sprintf("/orgs/%s/codespaces/secrets/%s/repositories", owner, secret)
 
 	resp, err := g.restClient.Request("GET", url, nil)
 
