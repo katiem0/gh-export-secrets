@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	gh "github.com/cli/go-gh"
@@ -81,7 +83,106 @@ func NewCmd() *cobra.Command {
 func runCmd(owner string, g Getter, reportWriter io.Writer) error {
 	var reposCursor *string
 	var allRepos []repoinfo
+	// Prepare writer for outputting report
 
+	csvWriter := csv.NewWriter(reportWriter)
+
+	err := csvWriter.Write([]string{
+		"SecretLevel",
+		"SecretType",
+		"SecretName",
+		"SecretAccess",
+		"RepositoryName",
+		"RepositoryID",
+	})
+
+	if err != nil {
+		return err
+	}
+	// Writing to CSV Org level Actions secrets
+	orgSecrets, err := g.GetOrgActionSecrets(owner)
+	if err != nil {
+		return err
+	}
+	var oActionResponseObject secretsResponse
+	json.Unmarshal(orgSecrets, &oActionResponseObject)
+	//fmt.Println(responseObject.Secrets)
+
+	for _, orgsecret := range oActionResponseObject.Secrets {
+		if orgsecret.Visibility == "selected" {
+			scoped_repo, err := g.GetScopedOrgActionSecrets(owner, orgsecret.Name)
+			if err != nil {
+				return err
+			}
+			var responseOObject scopedSecretsResponse
+			json.Unmarshal(scoped_repo, &responseOObject)
+			for _, scopescret := range responseOObject.Repositories {
+				err = csvWriter.Write([]string{
+					"Organization",
+					"Actions",
+					orgsecret.Name,
+					orgsecret.Visibility,
+					scopescret.Name,
+					strconv.Itoa(scopescret.ID),
+				})
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			err = csvWriter.Write([]string{
+				"Organization",
+				"Actions",
+				orgsecret.Name,
+				orgsecret.Visibility,
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+	// Writing to CSV Org level Dependabot secrets
+	orgDepSecrets, err := g.GetOrgDependabotSecrets(owner)
+	if err != nil {
+		return err
+	}
+	var oDepResponseObject secretsResponse
+	json.Unmarshal(orgDepSecrets, &oDepResponseObject)
+	//fmt.Println(responseObject.Secrets)
+
+	for _, orgDepSecret := range oDepResponseObject.Secrets {
+		if orgDepSecret.Visibility == "selected" {
+			scoped_repo, err := g.GetScopedOrgDependabotSecrets(owner, orgDepSecret.Name)
+			if err != nil {
+				return err
+			}
+			var rDepResponseObject scopedSecretsResponse
+			json.Unmarshal(scoped_repo, &rDepResponseObject)
+			for _, depScopeSecret := range rDepResponseObject.Repositories {
+				err = csvWriter.Write([]string{
+					"Organization",
+					"Dependabot",
+					orgDepSecret.Name,
+					orgDepSecret.Visibility,
+					depScopeSecret.Name,
+					strconv.Itoa(depScopeSecret.ID),
+				})
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			err = csvWriter.Write([]string{
+				"Organization",
+				"Dependabot",
+				orgDepSecret.Name,
+				orgDepSecret.Visibility,
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
 	for {
 		reposQuery, err := g.GetReposList(owner, reposCursor)
 
@@ -97,26 +198,19 @@ func runCmd(owner string, g Getter, reportWriter io.Writer) error {
 			break
 		}
 	}
-	orgSecrets, err := g.GetOrgActionSecrets(owner)
-	if err != nil {
-		return err
-	}
-	var responseObject secretsResponse
-	json.Unmarshal(orgSecrets, &responseObject)
-	fmt.Println(responseObject.Secrets)
 
-	var repo string = "bbs-testing"
-	repoActionSecrets, err := g.GetRepoActionSecrets(owner, repo)
-	if err != nil {
-		return err
-	}
-	var repoResponseObject secretsResponse
-	json.Unmarshal(repoActionSecrets, &repoResponseObject)
-	fmt.Println(repoResponseObject.Secrets)
+	// repoActionSecrets, err := g.GetRepoActionSecrets(owner, repo)
+	// if err != nil {
+	// 	return err
+	// }
+	// var repoResponseObject secretsResponse
+	// json.Unmarshal(repoActionSecrets, &repoResponseObject)
+	//fmt.Println(repoResponseObject.Secrets)
 
-	scopedActionSecrets, err := g.
+	csvWriter.Flush()
 
 	return nil
+
 }
 
 type SecretExport struct {
@@ -212,11 +306,10 @@ func (g *APIGetter) GetOrgActionSecrets(owner string) ([]byte, error) {
 	url := fmt.Sprintf("orgs/%s/actions/secrets", owner)
 
 	resp, err := g.restClient.Request("GET", url, nil)
-
-	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
+	responseData, err := ioutil.ReadAll(resp.Body)
 	return responseData, err
 }
 
@@ -224,23 +317,21 @@ func (g *APIGetter) GetRepoActionSecrets(owner string, repo string) ([]byte, err
 	url := fmt.Sprintf("repos/%s/%s/actions/secrets", owner, repo)
 
 	resp, err := g.restClient.Request("GET", url, nil)
-
-	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
+	responseData, err := ioutil.ReadAll(resp.Body)
 	return responseData, err
 }
 
 func (g *APIGetter) GetScopedOrgActionSecrets(owner string, secret string) ([]byte, error) {
-	url := fmt.Sprintf("/orgs/%s/actions/secrets/%s/repositories", owner, secret)
+	url := fmt.Sprintf("orgs/%s/actions/secrets/%s/repositories", owner, secret)
 
 	resp, err := g.restClient.Request("GET", url, nil)
-
-	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
+	responseData, err := ioutil.ReadAll(resp.Body)
 	return responseData, err
 }
 
@@ -248,11 +339,10 @@ func (g *APIGetter) GetOrgDependabotSecrets(owner string) ([]byte, error) {
 	url := fmt.Sprintf("orgs/%s/dependabot/secrets", owner)
 
 	resp, err := g.restClient.Request("GET", url, nil)
-
-	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
+	responseData, err := ioutil.ReadAll(resp.Body)
 	return responseData, err
 }
 
@@ -262,21 +352,17 @@ func (g *APIGetter) GetRepoDependabotSecrets(owner string, repo string) ([]byte,
 	resp, err := g.restClient.Request("GET", url, nil)
 
 	responseData, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
 	return responseData, err
 }
 
 func (g *APIGetter) GetScopedOrgDependabotSecrets(owner string, secret string) ([]byte, error) {
-	url := fmt.Sprintf("/orgs/%s/dependabot/secrets/%s/repositories", owner, secret)
+	url := fmt.Sprintf("orgs/%s/dependabot/secrets/%s/repositories", owner, secret)
 
 	resp, err := g.restClient.Request("GET", url, nil)
-
-	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
+	responseData, err := ioutil.ReadAll(resp.Body)
 	return responseData, err
 }
 
@@ -284,11 +370,10 @@ func (g *APIGetter) GetOrgCodespacesSecrets(owner string) ([]byte, error) {
 	url := fmt.Sprintf("orgs/%s/codespaces/secrets", owner)
 
 	resp, err := g.restClient.Request("GET", url, nil)
-
-	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
+	responseData, err := ioutil.ReadAll(resp.Body)
 	return responseData, err
 }
 
@@ -296,22 +381,20 @@ func (g *APIGetter) GetRepoCodespacesSecrets(owner string, repo string) ([]byte,
 	url := fmt.Sprintf("repos/%s/%s/codespaces/secrets", owner, repo)
 
 	resp, err := g.restClient.Request("GET", url, nil)
-
-	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
+	responseData, err := ioutil.ReadAll(resp.Body)
 	return responseData, err
 }
 
 func (g *APIGetter) GetScopedOrgCodespacesSecrets(owner string, secret string) ([]byte, error) {
-	url := fmt.Sprintf("/orgs/%s/codespaces/secrets/%s/repositories", owner, secret)
+	url := fmt.Sprintf("orgs/%s/codespaces/secrets/%s/repositories", owner, secret)
 
 	resp, err := g.restClient.Request("GET", url, nil)
-
-	responseData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
+	responseData, err := ioutil.ReadAll(resp.Body)
 	return responseData, err
 }
