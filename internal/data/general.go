@@ -9,6 +9,7 @@ import (
 
 type Getter interface {
 	GetReposList(owner string, endCursor *string) ([]ReposQuery, error)
+	GetRepo(owner string, name string) ([]RepoQuery, error)
 	GetOrgActionSecrets(owner string) ([]byte, error)
 	GetRepoActionSecrets(owner string, repo string) ([]byte, error)
 	GetScopedOrgActionSecrets(owner string, secret string) ([]byte, error)
@@ -42,10 +43,10 @@ type SecretExport struct {
 }
 
 type RepoInfo struct {
-	DatabaseId int
-	Name       string
-	UpdatedAt  time.Time
-	Visibility string
+	DatabaseId int       `json:"databaseId"`
+	Name       string    `json:"name"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+	Visibility string    `json:"visibility"`
 }
 
 type ReposQuery struct {
@@ -61,6 +62,10 @@ type ReposQuery struct {
 	} `graphql:"organization(login: $owner)"`
 }
 
+type RepoQuery struct {
+	Repository RepoInfo `graphql:"repository(owner: $owner, name: $name)"`
+}
+
 func (g *APIGetter) GetReposList(owner string, endCursor *string) (*ReposQuery, error) {
 	query := new(ReposQuery)
 	variables := map[string]interface{}{
@@ -70,6 +75,17 @@ func (g *APIGetter) GetReposList(owner string, endCursor *string) (*ReposQuery, 
 
 	err := g.gqlClient.Query("getRepos", &query, variables)
 
+	return query, err
+}
+
+func (g *APIGetter) GetRepo(owner string, name string) (*RepoQuery, error) {
+	query := new(RepoQuery)
+	variables := map[string]interface{}{
+		"owner": graphql.String(owner),
+		"name":  graphql.String(name),
+	}
+
+	err := g.gqlClient.Query("getRepo", &query, variables)
 	return query, err
 }
 
