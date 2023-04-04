@@ -2,7 +2,6 @@
 
 A GitHub `gh` [CLI](https://cli.github.com/) extension to list the names and access level for GitHub Actions, Dependabot, and Codepsaces secrets at the Organization and/or Repository level.
 
-
 It produces a `csv` report detailing:
 
 - `SecretLevel`: If the secret was created at the organization or repository level
