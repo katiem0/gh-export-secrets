@@ -14,6 +14,9 @@ func (g *APIGetter) GetOrgActionSecrets(owner string) ([]byte, error) {
 		log.Fatal(err)
 	}
 	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return responseData, err
 }
 
@@ -25,6 +28,9 @@ func (g *APIGetter) GetRepoActionSecrets(owner string, repo string) ([]byte, err
 		log.Fatal(err)
 	}
 	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return responseData, err
 }
 
@@ -36,5 +42,8 @@ func (g *APIGetter) GetScopedOrgActionSecrets(owner string, secret string) ([]by
 		log.Fatal(err)
 	}
 	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return responseData, err
 }

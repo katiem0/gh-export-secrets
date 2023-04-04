@@ -14,6 +14,9 @@ func (g *APIGetter) GetOrgCodespacesSecrets(owner string) ([]byte, error) {
 		log.Fatal(err)
 	}
 	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return responseData, err
 }
 
@@ -25,6 +28,9 @@ func (g *APIGetter) GetRepoCodespacesSecrets(owner string, repo string) ([]byte,
 		log.Fatal(err)
 	}
 	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return responseData, err
 }
 
@@ -36,5 +42,8 @@ func (g *APIGetter) GetScopedOrgCodespacesSecrets(owner string, secret string) (
 		log.Fatal(err)
 	}
 	responseData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return responseData, err
 }
