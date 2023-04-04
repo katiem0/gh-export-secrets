@@ -1,6 +1,6 @@
 # gh-export-secrets
 
-A GitHub `gh` [CLI](https://cli.github.com/) extension to list the names and access level for GitHub Actions, Dependabot, and Codepsaces secrets at the Organization and/or Repository level.
+A GitHub `gh` [CLI](https://cli.github.com/) extension to list the name and access level of GitHub Actions, Dependabot, and Codepsaces secrets at the Organization and/or Repository level.
 
 It produces a `csv` report detailing:
 
