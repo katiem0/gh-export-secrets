@@ -2,8 +2,6 @@
 
 A GitHub `gh` [CLI](https://cli.github.com/) extension to list the names and access level for GitHub Actions, Dependabot, and Codepsaces secrets at the Organization and/or Repository level.
 
-> **Note:**
-> This extension does **NOT** retrieve the value of the secret.
 
 It produces a `csv` report detailing:
 
@@ -12,10 +10,10 @@ It produces a `csv` report detailing:
 - `SecretName`: The name of the secret
 - `SecretAccess`: If an organization level secret, the visibility of the secret (i.e. `all`, `private`, or `scoped`)
 - `RepositoryName`: The name of the repository that the secret can be accessed from 
-- `RepositoryID`: The `id` of the repository that the secret can be accessed from
+- `RepositoryID`: The `id` of the repository that the secret can be accessed from 
 
-> **Note:** 
-> This extension only supports github.com. 
+> **Note:**
+> This extension does **NOT** retrieve the value of the secret.
 
 ## Installation
 
@@ -30,6 +28,9 @@ It produces a `csv` report detailing:
 For more information: [`gh extension install`](https://cli.github.com/manual/gh_extension_install)
 
 ## Usage
+
+> **Note:** 
+> This extension only supports github.com.
 
 ```sh
  $ gh export-secrets -h
