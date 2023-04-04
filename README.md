@@ -31,16 +31,17 @@ For more information: [`gh extension install`](https://cli.github.com/manual/gh_
 ```sh
  $ gh export-secrets -h
 
-Generate a report of Actions, Dependabot, and Codespaces secrets for an organization.
+Generate a report of Actions, Dependabot, and Codespaces secrets for an organization and/or repositories.
 
 Usage:
-  gh export-secrets <organization> [flags]
+  gh export-secrets [flags] <organization> [repo ...] 
 
 Flags:
-  -w, --actionsOnly          Whether to retrieve Actions secrets only
-  -a, --all                  Whether to retrieve all secrets types (default true)
-  -c, --codespacesOnly       Whether to retrieve Codespaces secrets only
-  -d, --dependabotOnly       Whether to retrieve Dependabot secrets only
-  -h, --help                 help for gh-export-secrets
-  -o, --output-file string   Name of file to write CSV report (default "report-20230323121624.csv")
+  -b, --actionsSecrets       To retrieve Actions secrets
+  -a, --all                  To retrieve all secrets types
+  -c, --codespacesSecrets    To retrieve Codespaces secrets
+  -e, --debug                To debug logging
+  -d, --dependabotSecrets    To retrieve Dependabot secrets
+  -h, --help                 help for gh
+  -o, --output-file string   Name of file to write CSV report (default "report-20230404120355.csv")
 ```

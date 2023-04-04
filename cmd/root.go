@@ -33,8 +33,8 @@ func NewCmd() *cobra.Command {
 
 	cmd := cobra.Command{
 		Use:   "gh export-secrets [flags] <organization> [repo ...] ",
-		Short: "Generate a report of Actions, Dependabot, and Codespaces secrets for an organization or repositories.",
-		Long:  "Generate a report of Actions, Dependabot, and Codespaces secrets for an organization or repositories.",
+		Short: "Generate a report of Actions, Dependabot, and Codespaces secrets for an organization and/or repositories.",
+		Long:  "Generate a report of Actions, Dependabot, and Codespaces secrets for an organization and/or repositories.",
 		Args:  cobra.MinimumNArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if !cmdFlags.all && !cmdFlags.actions && !cmdFlags.dependabot && !cmdFlags.codespaces {
@@ -97,6 +97,7 @@ func NewCmd() *cobra.Command {
 	reportFileDefault := fmt.Sprintf("report-%s.csv", time.Now().Format("20060102150405"))
 
 	// Configure flags for command
+
 	cmd.PersistentFlags().BoolVarP(&cmdFlags.all, "all", "a", false, "To retrieve all secrets types")
 	cmd.PersistentFlags().BoolVarP(&cmdFlags.actions, "actionsSecrets", "b", false, "To retrieve Actions secrets")
 	cmd.PersistentFlags().BoolVarP(&cmdFlags.dependabot, "dependabotSecrets", "d", false, "To retrieve Dependabot secrets")
