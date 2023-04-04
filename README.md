@@ -40,11 +40,8 @@ Usage:
   gh export-secrets [flags] <organization> [repo ...] 
 
 Flags:
-  -b, --actionsSecrets       To retrieve Actions secrets
-  -a, --all                  To retrieve all secrets types
-  -c, --codespacesSecrets    To retrieve Codespaces secrets
-  -e, --debug                To debug logging
-  -d, --dependabotSecrets    To retrieve Dependabot secrets
+  -a, --app string           List secrets for a specific application or all: {all|actions|codespaces|dependabot} (default "all")
+  -d, --debug                To debug logging
   -h, --help                 help for gh
-  -o, --output-file string   Name of file to write CSV report (default "report-20230404120355.csv")
+  -o, --output-file string   Name of file to write CSV report (default "report-20230404132545.csv")
 ```

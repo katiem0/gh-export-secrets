@@ -19,10 +19,7 @@ import (
 )
 
 type cmdFlags struct {
-	all        bool
-	actions    bool
-	dependabot bool
-	codespaces bool
+	app        string
 	reportFile string
 	debug      bool
 }
@@ -36,12 +33,6 @@ func NewCmd() *cobra.Command {
 		Short: "Generate a report of Actions, Dependabot, and Codespaces secrets for an organization and/or repositories.",
 		Long:  "Generate a report of Actions, Dependabot, and Codespaces secrets for an organization and/or repositories.",
 		Args:  cobra.MinimumNArgs(1),
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if !cmdFlags.all && !cmdFlags.actions && !cmdFlags.dependabot && !cmdFlags.codespaces {
-				return errors.New("At least one secrets flag is required")
-			}
-			return nil
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var err error
 			var gqlClient api.GQLClient
@@ -95,15 +86,13 @@ func NewCmd() *cobra.Command {
 
 	// Determine default report file based on current timestamp; for more info see https://pkg.go.dev/time#pkg-constants
 	reportFileDefault := fmt.Sprintf("report-%s.csv", time.Now().Format("20060102150405"))
-
+	appDefault := "all"
 	// Configure flags for command
 
-	cmd.PersistentFlags().BoolVarP(&cmdFlags.all, "all", "a", false, "To retrieve all secrets types")
-	cmd.PersistentFlags().BoolVarP(&cmdFlags.actions, "actionsSecrets", "b", false, "To retrieve Actions secrets")
-	cmd.PersistentFlags().BoolVarP(&cmdFlags.dependabot, "dependabotSecrets", "d", false, "To retrieve Dependabot secrets")
-	cmd.PersistentFlags().BoolVarP(&cmdFlags.codespaces, "codespacesSecrets", "c", false, "To retrieve Codespaces secrets")
+	cmd.PersistentFlags().StringVarP(&cmdFlags.app, "app", "a", appDefault, "List secrets for a specific application or all: {all|actions|codespaces|dependabot}")
 	cmd.Flags().StringVarP(&cmdFlags.reportFile, "output-file", "o", reportFileDefault, "Name of file to write CSV report")
-	cmd.PersistentFlags().BoolVarP(&cmdFlags.debug, "debug", "e", false, "To debug logging")
+	cmd.PersistentFlags().BoolVarP(&cmdFlags.debug, "debug", "d", false, "To debug logging")
+	//cmd.MarkPersistentFlagRequired("app")
 
 	return &cmd
 }
@@ -162,7 +151,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 	}
 
 	// Writing to CSV Org level Actions secrets
-	if len(repos) == 0 && (cmdFlags.actions || cmdFlags.all) {
+	if len(repos) == 0 && (cmdFlags.app == "all" || cmdFlags.app == "actions") {
 		zap.S().Debugf("Gathering Actions Secrets for %s", owner)
 		orgSecrets, err := g.GetOrgActionSecrets(owner)
 		if err != nil {
@@ -226,7 +215,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 	}
 
 	// Writing to CSV Org level Dependabot secrets
-	if len(repos) == 0 && (cmdFlags.dependabot || cmdFlags.all) {
+	if len(repos) == 0 && (cmdFlags.app == "all" || cmdFlags.app == "dependabot") {
 
 		orgDepSecrets, err := g.GetOrgDependabotSecrets(owner)
 		if err != nil {
@@ -291,7 +280,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 	}
 
 	// Writing to CSV Org level Codespaces secrets
-	if len(repos) == 0 && (cmdFlags.codespaces || cmdFlags.all) {
+	if len(repos) == 0 && (cmdFlags.app == "all" || cmdFlags.app == "codespaces") {
 
 		orgCodeSecrets, err := g.GetOrgCodespacesSecrets(owner)
 		if err != nil {
@@ -358,7 +347,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 	// Writing to CSV repository level Secrets
 	for _, singleRepo := range allRepos {
 		// Writing to CSV repository level Actions secrets
-		if cmdFlags.actions || cmdFlags.all {
+		if cmdFlags.app == "all" || cmdFlags.app == "actions" {
 			repoActionSecretsList, err := g.GetRepoActionSecrets(owner, singleRepo.Name)
 			if err != nil {
 				return err
@@ -380,7 +369,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 			}
 		}
 		// Writing to CSV repository level Dependabot secrets
-		if cmdFlags.dependabot || cmdFlags.all {
+		if cmdFlags.app == "all" || cmdFlags.app == "dependabot" {
 			repoDepSecretsList, err := g.GetRepoDependabotSecrets(owner, singleRepo.Name)
 			if err != nil {
 				return err
@@ -402,7 +391,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 			}
 		}
 		// Writing to CSV repository level Codespaces secrets
-		if cmdFlags.codespaces || cmdFlags.all {
+		if cmdFlags.app == "all" || cmdFlags.app == "codespaces" {
 			repoCodeSecretsList, err := g.GetRepoCodespacesSecrets(owner, singleRepo.Name)
 			if err != nil {
 				zap.S().Error("Error raised in writing output", zap.Error(err))
