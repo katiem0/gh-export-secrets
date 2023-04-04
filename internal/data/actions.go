@@ -2,7 +2,7 @@ package data
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 )
 
@@ -13,7 +13,7 @@ func (g *APIGetter) GetOrgActionSecrets(owner string) ([]byte, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	responseData, err := ioutil.ReadAll(resp.Body)
+	responseData, err := io.ReadAll(resp.Body)
 	return responseData, err
 }
 
@@ -24,7 +24,7 @@ func (g *APIGetter) GetRepoActionSecrets(owner string, repo string) ([]byte, err
 	if err != nil {
 		log.Fatal(err)
 	}
-	responseData, err := ioutil.ReadAll(resp.Body)
+	responseData, err := io.ReadAll(resp.Body)
 	return responseData, err
 }
 
@@ -35,6 +35,6 @@ func (g *APIGetter) GetScopedOrgActionSecrets(owner string, secret string) ([]by
 	if err != nil {
 		log.Fatal(err)
 	}
-	responseData, err := ioutil.ReadAll(resp.Body)
+	responseData, err := io.ReadAll(resp.Body)
 	return responseData, err
 }

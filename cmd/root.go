@@ -158,7 +158,10 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 			return err
 		}
 		var oActionResponseObject data.SecretsResponse
-		json.Unmarshal(orgSecrets, &oActionResponseObject)
+		err = json.Unmarshal(orgSecrets, &oActionResponseObject)
+		if err != nil {
+			return err
+		}
 
 		for _, orgSecret := range oActionResponseObject.Secrets {
 			if orgSecret.Visibility == "selected" {
@@ -168,7 +171,10 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 					zap.S().Error("Error raised in writing output", zap.Error(err))
 				}
 				var responseOObject data.ScopedSecretsResponse
-				json.Unmarshal(scoped_repo, &responseOObject)
+				err = json.Unmarshal(scoped_repo, &responseOObject)
+				if err != nil {
+					return err
+				}
 				for _, scopeSecret := range responseOObject.Repositories {
 					err = csvWriter.Write([]string{
 						"Organization",
@@ -222,7 +228,10 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 			return err
 		}
 		var oDepResponseObject data.SecretsResponse
-		json.Unmarshal(orgDepSecrets, &oDepResponseObject)
+		err = json.Unmarshal(orgDepSecrets, &oDepResponseObject)
+		if err != nil {
+			return err
+		}
 		//fmt.Println(responseObject.Secrets)
 
 		for _, orgDepSecret := range oDepResponseObject.Secrets {
@@ -233,7 +242,10 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 					return err
 				}
 				var rDepResponseObject data.ScopedSecretsResponse
-				json.Unmarshal(scoped_repo, &rDepResponseObject)
+				err = json.Unmarshal(scoped_repo, &rDepResponseObject)
+				if err != nil {
+					return err
+				}
 				for _, depScopeSecret := range rDepResponseObject.Repositories {
 					err = csvWriter.Write([]string{
 						"Organization",
@@ -287,7 +299,10 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 			return err
 		}
 		var oCodeResponseObject data.SecretsResponse
-		json.Unmarshal(orgCodeSecrets, &oCodeResponseObject)
+		err = json.Unmarshal(orgCodeSecrets, &oCodeResponseObject)
+		if err != nil {
+			return err
+		}
 		//fmt.Println(responseObject.Secrets)
 
 		for _, orgCodeSecret := range oCodeResponseObject.Secrets {
@@ -298,7 +313,10 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 					return err
 				}
 				var rCodeResponseObject data.ScopedSecretsResponse
-				json.Unmarshal(scoped_repo, &rCodeResponseObject)
+				err = json.Unmarshal(scoped_repo, &rCodeResponseObject)
+				if err != nil {
+					return err
+				}
 				for _, codeScopeSecret := range rCodeResponseObject.Repositories {
 					err = csvWriter.Write([]string{
 						"Organization",
@@ -353,7 +371,10 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 				return err
 			}
 			var repoActionResponseObject data.SecretsResponse
-			json.Unmarshal(repoActionSecretsList, &repoActionResponseObject)
+			err = json.Unmarshal(repoActionSecretsList, &repoActionResponseObject)
+			if err != nil {
+				return err
+			}
 			for _, repoActionsSecret := range repoActionResponseObject.Secrets {
 				err = csvWriter.Write([]string{
 					"Repository",
@@ -375,7 +396,10 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 				return err
 			}
 			var repoDepResponseObject data.SecretsResponse
-			json.Unmarshal(repoDepSecretsList, &repoDepResponseObject)
+			err = json.Unmarshal(repoDepSecretsList, &repoDepResponseObject)
+			if err != nil {
+				return err
+			}
 			for _, repoDepSecret := range repoDepResponseObject.Secrets {
 				err = csvWriter.Write([]string{
 					"Repository",
@@ -397,7 +421,10 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 				zap.S().Error("Error raised in writing output", zap.Error(err))
 			}
 			var repoCodeResponseObject data.SecretsResponse
-			json.Unmarshal(repoCodeSecretsList, &repoCodeResponseObject)
+			err = json.Unmarshal(repoCodeSecretsList, &repoCodeResponseObject)
+			if err != nil {
+				return err
+			}
 			for _, repoCodeSecret := range repoCodeResponseObject.Secrets {
 				err = csvWriter.Write([]string{
 					"Repository",
