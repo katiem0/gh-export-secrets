@@ -28,8 +28,7 @@ For more information: [`gh extension install`](https://cli.github.com/manual/gh_
 
 ## Usage
 
-> **Note:** 
-> This extension only supports github.com.
+This extension supports `GitHub.com` and GHES, through the use of `--hostname`. 
 
 ```sh
  $ gh export-secrets -h
@@ -40,8 +39,10 @@ Usage:
   gh export-secrets [flags] <organization> [repo ...] 
 
 Flags:
-  -a, --app string           List secrets for a specific application or all: {all|actions|codespaces|dependabot} (default "all")
+  -a, --app string           List secrets for a specific application or all: {all|actions|codespaces|dependabot} (default "actions")
   -d, --debug                To debug logging
   -h, --help                 help for gh
-  -o, --output-file string   Name of file to write CSV report (default "report-20230404132545.csv")
+      --hostname string      GitHub Enterprise Server hostname (default "github.com")
+  -o, --output-file string   Name of file to write CSV report (default "report-20230405134752.csv")
+  -t, --token string         GitHub Personal Access Token (default "gh auth token")
 ```
