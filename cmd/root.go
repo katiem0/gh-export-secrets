@@ -12,6 +12,7 @@ import (
 
 	gh "github.com/cli/go-gh"
 	"github.com/cli/go-gh/pkg/api"
+	"github.com/cli/go-gh/pkg/auth"
 	"github.com/katiem0/gh-export-secrets/internal/data"
 	"github.com/katiem0/gh-export-secrets/internal/log"
 	"github.com/spf13/cobra"
@@ -20,6 +21,8 @@ import (
 
 type cmdFlags struct {
 	app        string
+	hostname   string
+	token      string
 	reportFile string
 	debug      bool
 }
@@ -27,6 +30,7 @@ type cmdFlags struct {
 func NewCmd() *cobra.Command {
 	//var repository string
 	cmdFlags := cmdFlags{}
+	var authToken string
 
 	cmd := cobra.Command{
 		Use:   "gh export-secrets [flags] <organization> [repo ...] ",
@@ -45,10 +49,19 @@ func NewCmd() *cobra.Command {
 				zap.ReplaceGlobals(logger)
 			}
 
+			if cmdFlags.token != "" {
+				authToken = cmdFlags.token
+			} else {
+				t, _ := auth.TokenForHost(cmdFlags.hostname)
+				authToken = t
+			}
+
 			gqlClient, err = gh.GQLClient(&api.ClientOptions{
 				Headers: map[string]string{
 					"Accept": "application/vnd.github.hawkgirl-preview+json",
 				},
+				Host:      cmdFlags.hostname,
+				AuthToken: authToken,
 			})
 
 			if err != nil {
@@ -60,6 +73,8 @@ func NewCmd() *cobra.Command {
 				Headers: map[string]string{
 					"Accept": "application/vnd.github+json",
 				},
+				Host:      cmdFlags.hostname,
+				AuthToken: authToken,
 			})
 
 			if err != nil {
@@ -86,10 +101,12 @@ func NewCmd() *cobra.Command {
 
 	// Determine default report file based on current timestamp; for more info see https://pkg.go.dev/time#pkg-constants
 	reportFileDefault := fmt.Sprintf("report-%s.csv", time.Now().Format("20060102150405"))
-	appDefault := "all"
+
 	// Configure flags for command
 
-	cmd.PersistentFlags().StringVarP(&cmdFlags.app, "app", "a", appDefault, "List secrets for a specific application or all: {all|actions|codespaces|dependabot}")
+	cmd.PersistentFlags().StringVarP(&cmdFlags.app, "app", "a", "actions", "List secrets for a specific application or all: {all|actions|codespaces|dependabot}")
+	cmd.PersistentFlags().StringVarP(&cmdFlags.token, "token", "t", "", `GitHub Personal Access Token (default "gh auth token")`)
+	cmd.PersistentFlags().StringVarP(&cmdFlags.hostname, "hostname", "", "github.com", "GitHub Enterprise Server hostname")
 	cmd.Flags().StringVarP(&cmdFlags.reportFile, "output-file", "o", reportFileDefault, "Name of file to write CSV report")
 	cmd.PersistentFlags().BoolVarP(&cmdFlags.debug, "debug", "d", false, "To debug logging")
 	//cmd.MarkPersistentFlagRequired("app")
@@ -152,17 +169,21 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 
 	// Writing to CSV Org level Actions secrets
 	if len(repos) == 0 && (cmdFlags.app == "all" || cmdFlags.app == "actions") {
-		zap.S().Debugf("Gathering Actions Secrets for %s", owner)
 		orgSecrets, err := g.GetOrgActionSecrets(owner)
 		if err != nil {
 			return err
 		}
+
 		var oActionResponseObject data.SecretsResponse
 		err = json.Unmarshal(orgSecrets, &oActionResponseObject)
 		if err != nil {
 			return err
 		}
-
+		if len(oActionResponseObject.Secrets) == 0 {
+			zap.S().Debugf("No org level Actions Secrets for %s", owner)
+		} else {
+			zap.S().Debugf("Gathering Actions Secrets for %s", owner)
+		}
 		for _, orgSecret := range oActionResponseObject.Secrets {
 			if orgSecret.Visibility == "selected" {
 				zap.S().Debugf("Gathering Actions Secrets for %s that are scoped to specific repositories", owner)
@@ -232,7 +253,12 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 		if err != nil {
 			return err
 		}
-		//fmt.Println(responseObject.Secrets)
+
+		if len(oDepResponseObject.Secrets) == 0 {
+			zap.S().Debugf("No org level Dependabot Secrets for %s", owner)
+		} else {
+			zap.S().Debugf("Gathering Dependabot Secrets for %s", owner)
+		}
 
 		for _, orgDepSecret := range oDepResponseObject.Secrets {
 			if orgDepSecret.Visibility == "selected" {
@@ -303,7 +329,11 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 		if err != nil {
 			return err
 		}
-		//fmt.Println(responseObject.Secrets)
+		if len(oCodeResponseObject.Secrets) == 0 {
+			zap.S().Debugf("No org level Codespaces Secrets for %s", owner)
+		} else {
+			zap.S().Debugf("Gathering Codespaces Secrets for %s", owner)
+		}
 
 		for _, orgCodeSecret := range oCodeResponseObject.Secrets {
 			zap.S().Debugf("Gathering Codespaces Secrets for %s that are scoped to specific repositories", owner)
