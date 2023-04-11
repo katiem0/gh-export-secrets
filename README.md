@@ -11,7 +11,7 @@ It produces a `csv` report detailing:
 - `RepositoryName`: The name of the repository that the secret can be accessed from 
 - `RepositoryID`: The `id` of the repository that the secret can be accessed from 
 
-> **Note:**
+> **Note**
 > This extension does **NOT** retrieve the value of the secret.
 
 ## Installation
