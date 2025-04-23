@@ -184,7 +184,8 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 			zap.S().Debugf("Gathering Actions Secrets for %s", owner)
 		}
 		for _, orgSecret := range oActionResponseObject.Secrets {
-			if orgSecret.Visibility == "selected" {
+			switch orgSecret.Visibility {
+			case "selected":
 				zap.S().Debugf("Gathering Actions Secrets for %s that are scoped to specific repositories", owner)
 				scoped_repo, err := g.GetScopedOrgActionSecrets(owner, orgSecret.Name)
 				if err != nil {
@@ -208,7 +209,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 						zap.S().Error("Error raised in writing output", zap.Error(err))
 					}
 				}
-			} else if orgSecret.Visibility == "private" {
+			case "private":
 				zap.S().Debugf("Gathering Actions Secret %s for %s that is accessible to all internal and private repositories.", orgSecret.Name, owner)
 				for _, repoActPrivateSecret := range allRepos {
 					if repoActPrivateSecret.Visibility != "public" {
@@ -225,7 +226,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 						}
 					}
 				}
-			} else {
+			default:
 				zap.S().Debugf("Gathering public Actions Secret %s for %s", orgSecret.Name, owner)
 				err = csvWriter.Write([]string{
 					"Organization",
@@ -260,7 +261,8 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 		}
 
 		for _, orgDepSecret := range oDepResponseObject.Secrets {
-			if orgDepSecret.Visibility == "selected" {
+			switch orgDepSecret.Visibility {
+			case "selected":
 				zap.S().Debugf("Gathering Dependabot Secret %s for %s that is scoped to specific repositories", orgDepSecret.Name, owner)
 				scoped_repo, err := g.GetScopedOrgDependabotSecrets(owner, orgDepSecret.Name)
 				if err != nil {
@@ -284,7 +286,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 						zap.S().Error("Error raised in writing output", zap.Error(err))
 					}
 				}
-			} else if orgDepSecret.Visibility == "private" {
+			case "private":
 				zap.S().Debugf("Gathering Dependabot Secret %s for %s that is accessible to all internal and private repositories.", orgDepSecret.Name, owner)
 				for _, repoPrivateSecret := range allRepos {
 					if repoPrivateSecret.Visibility != "public" {
@@ -301,7 +303,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 						}
 					}
 				}
-			} else {
+			default:
 				zap.S().Debugf("Gathering public Dependabot Secret %s for %s", orgDepSecret.Name, owner)
 				err = csvWriter.Write([]string{
 					"Organization",
@@ -336,7 +338,8 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 
 		for _, orgCodeSecret := range oCodeResponseObject.Secrets {
 			zap.S().Debugf("Gathering Codespaces Secrets for %s that are scoped to specific repositories", owner)
-			if orgCodeSecret.Visibility == "selected" {
+			switch orgCodeSecret.Visibility {
+			case "selected":
 				scoped_repo, err := g.GetScopedOrgCodespacesSecrets(owner, orgCodeSecret.Name)
 				if err != nil {
 					return err
@@ -359,7 +362,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 						zap.S().Error("Error raised in writing output", zap.Error(err))
 					}
 				}
-			} else if orgCodeSecret.Visibility == "private" {
+			case "private":
 				zap.S().Debugf("Gathering Codespaces Secret %s for %s that is accessible to all internal and private repositories.", orgCodeSecret.Name, owner)
 				for _, repoCodePrivateSecret := range allRepos {
 					if repoCodePrivateSecret.Visibility != "public" {
@@ -376,7 +379,7 @@ func runCmd(owner string, repos []string, cmdFlags *cmdFlags, g *data.APIGetter,
 						}
 					}
 				}
-			} else {
+			default:
 				zap.S().Debugf("Gathering public Codespaces Secret %s for %s", orgCodeSecret.Name, owner)
 				err = csvWriter.Write([]string{
 					"Organization",
